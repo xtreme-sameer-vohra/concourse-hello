@@ -5,11 +5,9 @@ resources:
     uri: git@github.com:xtreme-sameer-vohra/concourse-hello.git
     branch: master
     private_key: {{private_key}}
-
 jobs:
 - name: hello-world
   plan:
-  - get: source-code
   - task: say-hello
     config:
       platform: linux
@@ -30,4 +28,4 @@ jobs:
       - name: source-code
       run:
         path: /bin/bash
-        args: ['source-code/hello_concourse.sh']
+        args: ['source-code/say_hello.sh', 'boop']
