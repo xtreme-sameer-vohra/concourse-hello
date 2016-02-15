@@ -1,10 +1,3 @@
-resources:
-- name: source-code
-  type: git
-  source:
-    uri: git@github.com:xtreme-sameer-vohra/concourse-hello.git
-    branch: master
-    private_key: {{private_key}}
 jobs:
 - name: hello-world
   plan:
