@@ -25,10 +25,13 @@ jobs:
 - name: hi-concourse
   plan:
   - get: source-code
-  - task say-hi
+    trigger: true
+  - task: say-hi
     config:
       platform: linux
       image: docker:///ubuntu
+      inputs:
+      - name: source-code
       run:
         path: /bin/bash
-        args: ['hello_concourse.sh']
+        args: ['source-code/hello_concourse.sh']
