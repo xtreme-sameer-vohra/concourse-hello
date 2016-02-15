@@ -29,3 +29,19 @@ jobs:
       run:
         path: /bin/bash
         args: ['source-code/say_hello.sh', 'boop']
+
+
+- name: staging-helo
+  plan:
+  - get: source-code
+    trigger: true
+    passed: [ hi-concourse ]
+  - task: say-hi
+    config:
+      platform: linux
+      image: docker:///ubuntu
+      inputs:
+      - name: source-code
+      run:
+        path: /bin/bash
+        args: ['source-code/say_hello.sh', 'Quest']
