@@ -1,12 +1,34 @@
+resources:
+- name: source-code
+  type: git
+  source:
+    uri: git@github.com:xtreme-sameer-vohra/concourse-hello.git
+    branch: master
+    private_key: {{private_key}}
+
 jobs:
 - name: hello-world
   plan:
+  - get: source-code
   - task: say-hello
     config:
       platform: linux
       image_resource:
         type: docker-image
         source: {repository: ubuntu}
+      inputs:
+        - name: source-code
       run:
         path: echo
         args: ["Hello, world!"]
+
+- name: hi-concourse
+  plan:
+  - get: source-code
+  - task say-hi
+    config:
+      platform: linux
+      image: docker:///ubuntu
+      run:
+        path: /bin/bash
+        args: ['hello_concourse.sh']
