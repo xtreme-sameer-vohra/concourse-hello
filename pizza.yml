@@ -1,0 +1,126 @@
+resources:
+- name: pizza
+  type: s3
+  source:
+    bucket: concourse-demo-bucket
+    versioned_file: pizza.png
+    private: true
+    access_key_id: {{s3-access-key-id}}
+    secret_access_key: {{s3-secret-access-key}}
+
+- name: dough
+  type: s3
+  source:
+    private: true
+    bucket: concourse-demo-bucket
+    versioned_file: dough.png
+    access_key_id: {{s3-access-key-id}}
+    secret_access_key: {{s3-secret-access-key}}
+
+- name: pepperoni
+  type: s3
+  source:
+    private: true
+    bucket: concourse-demo-bucket
+    versioned_file: ingredients/pepperoni.png
+    access_key_id: {{s3-access-key-id}}
+    secret_access_key: {{s3-secret-access-key}}
+
+- name: green-pepper
+  type: s3
+  source:
+    private: true
+    bucket: concourse-demo-bucket
+    versioned_file: ingredients/green_pepper.png
+    access_key_id: {{s3-access-key-id}}
+    secret_access_key: {{s3-secret-access-key}}
+
+- name: cheese
+  type: s3
+  source:
+    private: true
+    bucket: concourse-demo-bucket
+    versioned_file: ingredients/sauce.png
+    access_key_id: {{s3-access-key-id}}
+    secret_access_key: {{s3-secret-access-key}}
+
+- name: toppings
+  type: s3
+  source:
+    private: true
+    bucket: concourse-demo-bucket
+    versioned_file: toppings/toppings.png
+    access_key_id: {{s3-access-key-id}}
+    secret_access_key: {{s3-secret-access-key}}
+
+jobs:
+  - name: make-dough
+    plan:
+      - get: dough
+      - put: pizza
+        params:
+          from: dough/dough.png
+
+  - name: chop-peppers
+    plan:
+      - get: green-pepper
+
+  - name: slice-pepperoni
+    plan:
+      - get: pepperoni
+
+  - name: grate-cheese
+    plan: 
+      - get: cheese
+
+  - name: prep-toppings
+    plan:
+      - get: green-pepper
+        passed: ["chop-peppers"]
+      - get: cheese
+        passed: ["grate-cheese"]
+      - get: pepperoni
+        passed: ["slice-pepperoni"]
+      - task: prep
+        config:
+          platform: linux
+          image: docker:///jujhars13/docker-imagemagick#latest
+          inputs:
+            - name: green-pepper
+            - name: pepperoni
+            - name: cheese
+          run:
+            path: /bin/bash
+            args: 
+            - -c
+            - mkdir prepared; composite -gravity center ./pepperoni/pepperoni.png ./cheese/sauce.png ./step1.png && composite -gravity center ./step1.png ./green-pepper/green_pepper.png ./prepared/ingredients.png
+          outputs:
+            - name: prepared
+      - put: toppings
+        params:
+          from: prepared/ingredients.png
+
+  - name: add-toppings-to-pizza
+    plan: 
+      - get: toppings
+        passed: ["prep-toppings"]
+      - get: pizza
+        passed: ["make-dough"]
+      - task: add-toppings
+        config:
+          platform: linux
+          image: docker:///jujhars13/docker-imagemagick#latest
+          inputs:
+            - name: toppings
+            - name: pizza
+          run:
+            path: /bin/bash
+            args: 
+            - -c
+            - mkdir prepared; composite -gravity center ./toppings/toppings.png ./pizza/pizza.png ./prepared/pizza.png
+          outputs:
+            - name: prepared
+      - put: pizza
+        params:
+          from: prepared/pizza.png
+
